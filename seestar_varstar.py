@@ -19,4 +19,4 @@ def seestar_run(targetName, coords, exptime):
     return 0
 
 #example
-seestar_run()
+seestar_run('kobli Kai', [5, -10], 10)
