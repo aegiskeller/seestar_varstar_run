@@ -4,11 +4,11 @@ import os
 import subprocess
 import numpy as np
 import pandas as pd
+import seestar_params as sp
 
-# Function to run the seestar_run.py
-def seestar_run():
+def seestar_run(targetName, coords, exptime):
     # Define the path to the seestar_run.py script
-    seestar_run_path = './seestar_run.py'
+    seestar_run_path = f'./seestar_run.py {sp.seestar_ip} \'{targetName}\' {coords[0]} {coords[1]} 0 {exptime} 1 1 1 1'
     
     # Run the seestar_run.py script and check for errors
     try:
