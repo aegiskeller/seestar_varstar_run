@@ -152,7 +152,7 @@ def goto_target(ra, dec, target_name, exp_time=10, exp_cont=60):
     cmdid += 1
     data['method'] = 'set_setting'
     params = {}
-    params['exp_ms'] = {}
+    params['exp_ms'] = {} #### this is not been set on the seestar
     params['exp_ms']['stack_l']=int(exp_time)*1000
     params['exp_ms']['continous']=int(exp_cont)*1000
     data['params'] = params
