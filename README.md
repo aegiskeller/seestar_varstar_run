@@ -1,6 +1,6 @@
 # seestar_varstar_run
 
-The following is a branch off the seestar_run.py script
+The following is a branch off the seestar_run.py script: https://github.com/smart-underworld/seestar_run
 
 I am aiming for a version that will be more ameanable to variable star observing.
 
