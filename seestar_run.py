@@ -293,17 +293,11 @@ def setup_argparse():
     parser.add_argument('title', type=str, help="Observation Target Title")
     parser.add_argument('ra', type=str, help="Right Ascenscion Target")
     parser.add_argument('dec', type=str, help="Declination Target")
-    parser.add_argument('session_time', type=int, help="Time (in seconds) for the stacking session")
-    parser.add_argument('exp_time', type=int, help="Time (in seconds) for images in the stack")
+    parser.add_argument('exp_time', type=float, help="Time (in seconds) for images in the stack")
+    parser.add_argument('session_time', type=float, help="Time (in seconds) for the stacking session")
     parser.add_argument('is_debug', type=str, default=False, nargs='?', help="Print debug logs while running.")
     return parser
     
-
-# seestar_run <ip_address> <target_name> <ra> <dec> <is_use_LP_filter> <session_time> <RA panel size> <Dec panel size> <RA offset factor> <Dec offset factor>
-# python seestar_run.py 192.168.110.30 'Castor' '7:24:32.5' '-41:24:23.5' 0 60 2 2 1.0 1.0
-# python seestar_run.py 192.168.110.30 'Castor' '7:24:32.5' '+41:24:23.5' 0 60 2 2 1.0 1.0
-# python seestar_run.py 192.168.110.30 'Castor' '7:24:32.5' '41:24:23.5' 0 60 2 2 1.0 1.0
-# python seestar_run.py 192.168.110.30 'Castor' 7.4090278 41.4065278 0 60 2 2 1.0 1.0
 if __name__ == "__main__":
     main()
     

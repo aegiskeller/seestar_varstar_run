@@ -6,7 +6,7 @@ The class can be used to test the seestar_run_runner method without running the 
 """
 import random
 
-def seestar_run_runner(targetName, coords, exptime):
+def seestar_run_runner(targetName, coords, exptime, totaltime):
     """Emulate the seestar_run_runner method of the SEESTAR_run module.
     Args:
     targetName (str): The name of the target.
@@ -40,14 +40,23 @@ def seestar_run_runner(targetName, coords, exptime):
         print('exptime is not a number')
         return 1
     # Print the arguments to the console
-    print(targetName, coords, exptime)
+    print(targetName, coords, exptime, totaltime)
     # every now and then the seestar_run_runner method will return 1
     # to simulate an instrument error - this ins generated at random a certain fraction of the time e_frac
-    e_frac = 0.5
+    e_frac = 0.1
     if random.random() < e_frac:
         raise Exception('Instrument error')
     return 0
 
 if __name__ == '__main__':
     # Test the seestar_run_runner method
-    seestar_run_runner('Kubla Kai', [5, -10], 10)
+    # read arguments from the command line
+    import sys
+    targetName = sys.argv[1]
+    coords = [float(sys.argv[2]), float(sys.argv[3])]
+    exptime = float(sys.argv[4])
+    totaltime = float(sys.argv[5])
+    # call the seestar_run_runner method
+    seestar_run_runner(targetName, coords, exptime, totaltime)
+    # return 0 to indicate success
+    sys.exit(0)
