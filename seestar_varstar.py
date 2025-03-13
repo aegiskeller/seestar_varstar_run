@@ -86,8 +86,8 @@ def get_coord_object(target_names):
     """
     try:
         result_table = Simbad.query_objects(target_names)
-        object_ra = result_table['ra'].data  # Right Ascension
-        object_dec = result_table['dec'].data  # Declination
+        object_ra = result_table['RA'].data  # Right Ascension
+        object_dec = result_table['DEC'].data  # Declination
         coord=SkyCoord(object_ra, object_dec,unit=(u.deg))
     except Exception as e:
         logger.error(f'Unable to get coordinates from Simbad - {e}')
