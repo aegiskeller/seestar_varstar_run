@@ -5,15 +5,72 @@ from datetime import datetime
 import threading
 import sys
 import argparse
-from seestar_helpers import CreateLogger, json_message2, shutdown_seestar, set_stack_settings
 import seestar_varstar_params as sp
+import logging
 
 #declare the logger globally
 logger = None
 
+def CreateLogger():
+    # Create a custom logger 
+    logger = logging.getLogger('seestar_run')
+    logger.setLevel(logging.DEBUG)
+
+    # Create handlers
+    #console_handler = logging.StreamHandler(sys.stdout)
+    file_handler = logging.FileHandler('seestar_run.log')
+
+    # Set levels for handlers
+    #console_handler.setLevel(logging.DEBUG)
+    file_handler.setLevel(logging.DEBUG)
+
+    # Create formatters and add them to handlers
+    #console_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+    #console_handler.setFormatter(console_format)
+    file_handler.setFormatter(file_format)
+
+    # Add handlers to the logger
+    #logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+    return(logger)
+
 def heartbeat(): #I noticed a lot of pairs of test_connection followed by a get if nothing was going on
     json_message("test_connection")
 #    json_message("scope_get_equ_coord")
+
+def json_message2(data, logger):
+    if data:
+        json_data = json.dumps(data)
+        logger.debug("Sending2 %s" % json_data)
+        resp = send_message(json_data + "\r\n")
+        logger.debug("Response2: %s" % resp)
+        return resp
+    else:
+        return None
+
+def shutdown_seestar(logger,cmdid):
+    """
+    Shutdown the seestar device
+    """
+    data = {}
+    data['id'] = cmdid
+    cmdid+=1
+    data['method'] = 'pi_shutdown'
+    json_message2(data,logger)
+
+def set_stack_settings(logger,cmdid):
+    logger.debug("set stack setting to record individual frames")
+    data = {}
+    data['id'] = cmdid
+    cmdid += 1
+    data['method'] = 'set_stack_setting'
+    params = {}
+    params['save_discrete_frame'] = True
+    data['params'] = params
+    return(json_message2(data,logger))
+
 
 def send_message(data):
     global s
@@ -100,7 +157,7 @@ def goto_target(ra, dec, target_name, exp_time=10, exp_cont=60):
     params['exp_ms']['continous']=int(exp_cont)*1000
     data['params'] = params
     logger.debug(f'Exposure Settings: {data}')
-    json_message2(data)
+    json_message2(data,logger)
 
     logger.debug("going to target...")
     data = {}
@@ -114,7 +171,7 @@ def goto_target(ra, dec, target_name, exp_time=10, exp_cont=60):
     params['target_name'] = target_name
     params['lp_filter'] = 1
     data['params'] = params
-    json_message2(data)
+    json_message2(data,logger)
     
 def start_stack():
     global cmdid
@@ -127,7 +184,7 @@ def start_stack():
     params = {}
     params['restart'] = True
     data['params'] = params
-    json_message2(data)
+    json_message2(data,logger)
 
 def stop_stack():
     global cmdid
@@ -140,7 +197,7 @@ def stop_stack():
     params = {}
     params['stage'] = 'Stack'
     data['params'] = params
-    json_message2(data)
+    json_message2(data,logger)
 
 def wait_end_op():
     global op_state
@@ -235,8 +292,8 @@ def main():
         logger.debug("Connected to SeeStar")
     else:
         logger.error("Failed to connect to SeeStar")
-        sys.exit(1)
-    set_stack_settings() 
+        raise RuntimeError("Failed to connect to SeeStar")
+    set_stack_settings(logger,cmdid) 
     with s:
         # flush the socket input stream for garbage
         get_socket_msg()
@@ -277,7 +334,8 @@ def main():
             stop_stack()
             logger.info("Stacking operation finished" + target_name)
         else:
-            logger.error("Goto failed.")       
+            logger.error("Goto failed.") 
+            raise RuntimeError("Goto failed.")      
         
     print("Finished seestar_run")
     is_watch_events = False
@@ -285,7 +343,7 @@ def main():
     s.close()
     if not is_debug:
         logger.info("Finished seestar_run") 
-        shutdown_seestar()
+        #shutdown_seestar(logger,cmdid)
     
     
 def setup_argparse():

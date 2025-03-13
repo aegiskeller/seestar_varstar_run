@@ -28,8 +28,12 @@ def logger():
     return logger
 
 def seestar_run_runner(targetName, coords, exptime, totaltime):
+    global test
     # Get the path to the seestar_run.py script
-    seestar_run_path = os.path.join(os.path.dirname(__file__), 'seestar_emul.py')
+    if test:
+        seestar_run_path = os.path.join(os.path.dirname(__file__), 'seestar_emul.py')
+    else:
+        seestar_run_path = os.path.join(os.path.dirname(__file__), 'seestar_run.py')
     # Check if the seestar_run.py script exists
     if not os.path.exists(seestar_run_path):
         logger.error('seestar_run.py does not exist')
@@ -68,6 +72,8 @@ def seestar_run_runner(targetName, coords, exptime, totaltime):
     p = subprocess.Popen(['python', seestar_run_path, targetName, str(coords[0]), str(coords[1]), str(exptime), str(totaltime)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     #check the return value of the seestar_run.py script
     stdout, stderr = p.communicate()
+    logger.debug(f'stdout: {stdout}')
+    logger.debug(f'stderr: {stderr}')
     if p.returncode != 0:
         logger.error
         ('seestar_run.py failed')
@@ -118,13 +124,13 @@ def target_session():
                 logger.debug(f'Exit status for target {target_names[i]}: {exit_status}')
                 if exit_status != 0:
                     logger.error(f'Error running target {target_names[i]}')
-                    raise RuntimeError('Error running target')
+                    #raise RuntimeError('Error running target')
         else:
             exit_status = seestar_run_runner(target_names[i], [ras[i], decs[i]], target_exptimes[i], target_stack_times[i])
             logger.debug(f'Exit status for target {target_names[i]}: {exit_status}')
             if exit_status != 0:
                 logger.error(f'Error running target {target_names[i]}')
-                raise RuntimeError('Error running target')
+                #raise RuntimeError('Error running target')
     logger.info('Session complete')        
     return 0
 
@@ -134,9 +140,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Seestar Varstar')
     parser.add_argument('schedule_file', type=str, help='The name of the target list file')
     parser.add_argument('mode', type=str, help='The mode of operation: single or repeat')
+    # add an optional argument for the testing mode with default of False
+    parser.add_argument('--test', action='store_true', help='Run in test mode')
     args = parser.parse_args()
     targetList = args.schedule_file
     mode =  args.mode
+    test = args.test
     logger.info(f'Arguments: {targetList, mode}')
 
     # Get the schedule of targets
