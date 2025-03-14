@@ -37,8 +37,8 @@ def CreateLogger():
     return(logger)
 
 def heartbeat(): #I noticed a lot of pairs of test_connection followed by a get if nothing was going on
-    json_message("test_connection")
-#    json_message("scope_get_equ_coord")
+#    json_message("test_connection")
+    json_message("scope_get_equ_coord",413)
 
 def json_message2(data, logger):
     if data:
@@ -75,12 +75,25 @@ def set_stack_settings(logger,cmdid):
 def send_message(data):
     global s
     try:
+        if s is None:
+            logger.error("Socket is not connected")
+            time.sleep(3)
+            return False
         s.sendall(data.encode())  # TODO: would utf-8 or unicode_escaped help here
+        return True
+    except socket.timout:
+        logger.error("Socket timeout")
+        time.sleep(3)
+        return False
     except socket.error as e:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((HOST, PORT))
-        send_message(data)
-
+        logger.error("Socket error: %s" % e)
+        time.sleep(3)
+        return False
+    except Exception as e:
+        logger.error("Exception: %s" % e)
+        time.sleep(3)
+        return False
+    
 def get_socket_msg():
     global s
     try:
@@ -125,8 +138,7 @@ def receieve_message_thread_fn():
                 first_index = msg_remainder.find("\r\n")
         time.sleep(1)
 
-def json_message(instruction):
-    global cmdid
+def json_message(instruction,cmdid):
     global logger
     data = {"id": cmdid, "method": instruction}
     cmdid += 1
@@ -154,7 +166,7 @@ def goto_target(ra, dec, target_name, exp_time=10, exp_cont=60):
     params = {}
     params['exp_ms'] = {} #### this is not been set on the seestar
     params['exp_ms']['stack_l']=int(exp_time)*1000
-    params['exp_ms']['continous']=int(exp_cont)*1000
+    params['exp_ms']['continuous']=int(exp_cont)*1000
     data['params'] = params
     logger.debug(f'Exposure Settings: {data}')
     json_message2(data,logger)
@@ -169,7 +181,7 @@ def goto_target(ra, dec, target_name, exp_time=10, exp_cont=60):
     ra_dec = [ra, dec]
     params['target_ra_dec'] = ra_dec
     params['target_name'] = target_name
-    params['lp_filter'] = 1
+    params['lp_filter'] = False
     data['params'] = params
     json_message2(data,logger)
     
@@ -207,7 +219,7 @@ def wait_end_op():
         heartbeat_timer += 1
         if heartbeat_timer > 5:
             heartbeat_timer = 0
-            json_message("test_connection")
+            json_message("test_connection",413)
         time.sleep(1)
 
     
@@ -216,7 +228,7 @@ def sleep_with_heartbeat():
     while stacking_timer < session_time:         # stacking time per segment
         stacking_timer += 1
         if stacking_timer % 5 == 0:
-            json_message("test_connection")
+            json_message("test_connection",413)
         time.sleep(1)
 
 def parse_ra_to_float(ra_string):
@@ -299,7 +311,7 @@ def main():
         get_socket_msg()
         
         if center_RA < 0:
-            json_message("scope_get_equ_coord")
+            json_message("scope_get_equ_coord",413)
             data = get_socket_msg()
             parsed_data = json.loads(data)
             if parsed_data['method'] == "scope_get_equ_coord":

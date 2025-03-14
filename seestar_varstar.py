@@ -2,13 +2,17 @@ import os
 import subprocess
 import numpy as np
 import pandas as pd
-import seestar_params as sp
+import seestar_varstar_params as sp
 import logging
 import argparse
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astroquery.simbad import Simbad
-import sys
+import datetime
+from datetime import timezone
+import ephem
+import time
+import pytz
 
 global logger
 
@@ -25,7 +29,45 @@ def logger():
     fh.setFormatter(formatter)
     # Add the file handler to the logger
     logger.addHandler(fh)
+    # Create a console handler
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)       
+    # Add the formatter to the console handler
+    ch.setFormatter(formatter)
+    # Add the console handler to the logger
+    logger.addHandler(ch)   
     return logger
+
+def determine_twilight():
+    """
+    Determine the start and end times of astronomical twilight
+    """
+    # Get the current time using utc tz
+    now = datetime.datetime.now()
+    # Get the astronomical twilight start and end times
+    # use pyEphem to calculate the astronomical twilight times
+    # for the current date and location
+
+    # Get the astronomical twilight start and end times
+    obs = ephem.Observer()
+    obs.lat = sp.Latitude
+    obs.long = sp.Longitude
+    obs.elev = sp.Elevation
+    obs.date = datetime.datetime.today().strftime('%Y-%m-%d')
+    sun = ephem.Sun()
+    obs.horizon = '0' #-18
+    start = obs.next_rising(sun, use_center=True)
+    end = obs.next_setting(sun, use_center=True)
+    start = start.datetime().replace(tzinfo=pytz.utc)
+    end = end.datetime().replace(tzinfo=pytz.utc)
+    logger.debug(f'last setting: {obs.previous_setting(sun, use_center=True)}')
+    logger.debug(f'next setting: {obs.next_setting(sun, use_center=True)}')
+    logger.debug(f'last rising: {obs.previous_rising(sun, use_center=True)}')
+    logger.debug(f'next rising: {obs.next_rising(sun, use_center=True)}')
+    logger.debug(f'Current time: {now}')
+    logger.debug(f'Astronomical twilight start: {start}')
+    logger.debug(f'Astronomical twilight end: {end}')
+    return start, end
 
 def seestar_run_runner(targetName, coords, exptime, totaltime):
     global test
@@ -95,6 +137,12 @@ def get_coord_object(target_names):
         object_ra = result_table['RA'].data  # Right Ascension
         object_dec = result_table['DEC'].data  # Declination
         coord=SkyCoord(object_ra, object_dec,unit=(u.deg))
+    except:
+        logger.debug('Unable to get coordinates from Simbad with caps')
+    try:
+        object_ra = result_table['ra'].data  # Right Ascension
+        object_dec = result_table['dec'].data  # Declination
+        coord=SkyCoord(object_ra, object_dec,unit=(u.deg))
     except Exception as e:
         logger.error(f'Unable to get coordinates from Simbad - {e}')
         raise RuntimeError('Unable to get coordinates from Simbad')
@@ -114,9 +162,31 @@ def target_session():
     global target_stack_times
     global target_exptimes
     global target_names
- 
+
+    # first check if 
+    start, end = determine_twilight()
+    iamearly = True
+    while iamearly:
+        # Check if the current time is within the astronomical twilight
+        now = datetime.datetime.now(tz=pytz.utc)
+        if now > end:
+            logger.error(f'Current time is too late to observe past {end}')
+            return 1
+        # Check if the current time is before the astronomical twilight
+        if now < start:
+            logger.info(f'Current time is too early to observe. Waiting until {start} ({now})')
+            time.sleep(60)
+        else:
+            iamearly = False
+    logger.info('Starting observations')
+
     # Loop through the targets
     for i in range(len(ras)):
+        # check the current time and see if it is in the twilight zone
+        now = datetime.datetime.now()
+        if now > end:
+            logger.error('Current time is too late to observe')
+            return 1
         if repeat:
             # Loop through the targets
             for i in range(len(ras)):
@@ -161,17 +231,27 @@ if __name__ == '__main__':
     target_exptimes = target_df['ExpTime'].values
 
     ras,decs = get_coord_object(target_names)
-    logger.debug(f'list of targets {target_names, ras, decs}')
+    # get the number of targets and change a str targets to equal 'target' if one target
+    if len(ras) == 1:
+        targetstr = 'Target'
+    else:
+        targetstr = 'Targets'
+    logger.debug(f'list of {targetstr, target_names, ras, decs}')
     # determine the repetition pattern requested
     if (mode not in ['repeat', 'single']):
-        logger.error(f'target sequence mode not known: {mode}')
+        logger.error(f'{targetstr} sequence mode not known: {mode}')
         raise RuntimeError('Sequence mode not known')
     elif (mode == 'repeat'):
-            logger.info(f'Targets ({len(ras)}) will be cycled repeatedly until dawn - mode {mode}')
+            logger.info(f'{targetstr} ({len(ras)}) will be cycled repeatedly until dawn - mode {mode}')
             repeat = True
     elif (mode == 'single'):
-            logger.info(f'Targets ({len(ras)}) will be observed in order - mode {mode}')
+            logger.info(f'{targetstr} ({len(ras)}) will be observed in order - mode {mode}')
             repeat = False        
+    # check the return value of the target_session function
+    exit_status = target_session()
+    if exit_status != 0:
+        logger.error('Error running target session')
+        raise RuntimeError('Error running target session')
+    logger.info('Program complete')
+    exit(0)
 
-    # Run the target session
-    target_session()

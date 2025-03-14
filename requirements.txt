@@ -4,5 +4,6 @@ numpy
 scipy
 matplotlib
 pandas
-seaborn
+ephem
+pyephem
 scikit-learn
