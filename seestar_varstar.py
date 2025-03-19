@@ -147,13 +147,13 @@ def get_coord_object(target_names):
         coord=SkyCoord(object_ra, object_dec,unit=(u.deg))
     except:
         logger.debug('Unable to get coordinates from Simbad with caps')
-    try:
-        object_ra = result_table['ra'].data  # Right Ascension
-        object_dec = result_table['dec'].data  # Declination
-        coord=SkyCoord(object_ra, object_dec,unit=(u.deg))
-    except Exception as e:
-        logger.error(f'Unable to get coordinates from Simbad - {e}')
-        raise RuntimeError('Unable to get coordinates from Simbad')
+        try:
+            object_ra = result_table['ra'].data  # Right Ascension
+            object_dec = result_table['dec'].data  # Declination
+            coord=SkyCoord(object_ra, object_dec,unit=(u.deg))
+        except Exception as e:
+            logger.error(f'Unable to get coordinates from Simbad - {e}')
+            raise RuntimeError('Unable to get coordinates from Simbad')
     return coord.ra.deg, coord.dec.deg
 
 
