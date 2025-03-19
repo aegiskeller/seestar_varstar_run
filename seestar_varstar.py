@@ -13,9 +13,11 @@ from datetime import timezone
 import ephem
 import time
 import pytz
+import requests
 
 global logger
 global test
+global testvarstar
 
 def logger():
     # Create a logger
@@ -48,36 +50,37 @@ def determine_twilight():
     # Get the astronomical twilight start and end times
     # use pyEphem to calculate the astronomical twilight times
     # for the current date and location
-
     # Get the astronomical twilight start and end times
     obs = ephem.Observer()
-    obs.lat = sp.Latitude
-    obs.long = sp.Longitude
+    latitude = sp.Latitude
+    longitude = sp.Longitude
+    obs.lat = str(latitude)
+    obs.lon = str(longitude)
     obs.elev = sp.Elevation
     # specify the date as today in utc
     obs.date = now.strftime('%Y-%m-%d')
     # use the sun object to calculate the twilight times
     sun = ephem.Sun()
     obs.horizon = '-18'
-    start = obs.next_rising(sun, use_center=True)
-    end = obs.next_setting(sun, use_center=True)
-    start = ephem.to_timezone(start, pytz.utc)
-    end = ephem.to_timezone(end, pytz.utc)
-    # logger.debug(f'last setting: {obs.previous_setting(sun, use_center=True)}')
-    # logger.debug(f'next setting: {obs.next_setting(sun, use_center=True)}')
-    # logger.debug(f'last rising: {obs.previous_rising(sun, use_center=True)}')
-    # logger.debug(f'next rising: {obs.next_rising(sun, use_center=True)}')
+    start = obs.next_rising(sun, use_center=True).datetime()
+    end = obs.next_setting(sun, use_center=True).datetime()
     logger.debug(f'Current UTC: {now}')
-    logger.debug(f'Astronomical twilight start: {start}')
-    # increment the pyephem end date by one day
-    end = end + datetime.timedelta(days=1)
-    logger.debug(f'Astronomical twilight end: {end}')
-    return start, end
+    local_tz = pytz.timezone(sp.tz)  
+    sunrise_local = start.replace(tzinfo=pytz.utc).astimezone(local_tz)
+    sunset_local = end.replace(tzinfo=pytz.utc).astimezone(local_tz)
+    sunrise_utc = start.replace(tzinfo=pytz.utc).astimezone(pytz.utc)
+    sunset_utc = end.replace(tzinfo=pytz.utc).astimezone(pytz.utc)
+    logger.debug(f'Sunrise UTC: {sunrise_utc.strftime("%Y-%m-%d %H:%M:%S %Z")}')
+    logger.debug(f'Sunset UTC: {sunset_utc.strftime("%Y-%m-%d %H:%M:%S %Z")}')
+    logger.debug(f'Sunset: {sunset_local.strftime("%Y-%m-%d %H:%M:%S %Z")}')
+    logger.debug(f'Sunrise: {sunrise_local.strftime("%Y-%m-%d %H:%M:%S %Z")}')
+    return sunrise_local, sunset_local
 
 def seestar_run_runner(targetName, coords, exptime, totaltime):
     global test
+    global testvarstar
     # Get the path to the seestar_run.py script
-    if test:
+    if test and not testvarstar:
         seestar_run_path = os.path.join(os.path.dirname(__file__), 'seestar_emul.py')
     else:
         seestar_run_path = os.path.join(os.path.dirname(__file__), 'seestar_run.py')
@@ -168,18 +171,19 @@ def target_session():
     global target_exptimes
     global target_names
 
-    # first check if 
-    start, end = determine_twilight()
+    # first check if it is okay to observe
+    # Get the start and end times of astronomical twilight in local time
+    sunrise, sunset = determine_twilight()
     iamearly = True
     while iamearly:
         # Check if the current time is within the astronomical twilight
-        now = datetime.datetime.now(tz=pytz.utc)
-        if now > end and not test:
-            logger.error(f'Current time is too late to observe past {end}')
+        now = datetime.datetime.now(pytz.timezone(sp.tz))
+        if now > sunrise and not (test or testvarstar):
+            logger.error(f'Current time is too late to observe - past sunrise{sunrise.strftime("%H:%M")}')
             return 1
         # Check if the current time is before the astronomical twilight
-        if now < start and not test:
-            logger.info(f'Current time is too early to observe. Waiting until {start.strftime("%H:%M")} (now: {now.strftime("%H:%M")})')
+        if now < sunset and not (test or testvarstar):
+            logger.info(f'Current time is too early to observe. Waiting until {sunset.strftime("%H:%M")} (now: {now.strftime("%H:%M")})')
             time.sleep(60)
         else:
             iamearly = False
@@ -188,8 +192,8 @@ def target_session():
     # Loop through the targets
     for i in range(len(ras)):
         # check the current time and see if it is in the twilight zone
-        now = datetime.datetime.now(tz=pytz.utc)
-        if now > end and not test:
+        now = datetime.datetime.now(pytz.timezone(sp.tz))
+        if now > sunrise and not test:
             logger.error('Current time is too late to observe')
             return 1
         if repeat:
@@ -217,12 +221,14 @@ if __name__ == '__main__':
     parser.add_argument('mode', type=str, help='The mode of operation: single or repeat')
     # add an optional argument for the testing mode with default of False
     parser.add_argument('--test', action='store_true', help='Run in test mode')
+    # add an optional argument for a testing mode 'testvarstar' with default of False
+    parser.add_argument('--testvarstar', action='store_true', help='Run in test mode with the seestar')
     args = parser.parse_args()
     targetList = args.schedule_file
     mode =  args.mode
     test = args.test
-    logger.info(f'Arguments: {targetList, mode}')
-
+    testvarstar = args.testvarstar
+    logger.info(f'Arguments: {targetList, mode, test, testvarstar}')
     # Get the schedule of targets
     try:
         target_df = pd.read_csv(targetList)
