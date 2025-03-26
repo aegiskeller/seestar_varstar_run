@@ -7,3 +7,4 @@ pandas
 ephem
 pyephem
 scikit-learn
+uuid
