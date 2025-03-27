@@ -121,8 +121,6 @@ def create_schedule(file):
         exptime = targets['ExpTime'][i]    
         totalexp = targets['TotalExp'][i]
         # convert the ra and dec from degress to hours and degrees
-        print (targets['ra'][i])
-        print (targets['dec'][i])
         ra = targets['ra'][i] / 15
         dec = targets['dec'][i]
         # fomrat the ra and dec as strings
