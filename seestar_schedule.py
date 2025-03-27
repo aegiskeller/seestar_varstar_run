@@ -40,6 +40,14 @@
 #     "current_item_id": "",
 #     "item_number": 0
 # }
+# the startup sequence is a list item as follows:
+# {
+#     "action": "wait_until",
+#     "params": {
+#         "local_time": "20:00"
+#     },
+#     "schedule_item_id": "faecb0b0-1f1b-11e9-8b4f-0a580a8100e0"
+# }
 
 import json
 import datetime
@@ -51,6 +59,31 @@ import uuid
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astroquery.simbad import Simbad
+import ephem
+import pytz
+
+
+def local_twilight():
+    # get the current date
+    now = datetime.datetime.now(tz=pytz.utc)
+    # get the current date
+    today = now.date()
+    #use pyephem to calculate the local twilight times
+    obs = ephem.Observer()
+    obs.lat = '-35.4'    # lat of the observatory
+    obs.long = '149.0'    # long of the observatory
+    obs.date = today
+    # calculate the next nautical twilight
+    # nautical twilight is when the sun is 12 degrees below the horizon
+    # determine when the sun is 12 degrees below the horizon
+    obs.horizon = '-12'
+    nautical_twilight = obs.next_setting(ephem.Sun(), use_center=True).datetime()
+    local_tz = pytz.timezone('Australia/Sydney')
+    # calculate the next morning nautical twilight
+    morning_nautical_twilight = obs.next_rising(ephem.Sun(), use_center=True).datetime()
+    ntlocal = nautical_twilight.replace(tzinfo=pytz.utc).astimezone(local_tz)
+    mntlocal = morning_nautical_twilight.replace(tzinfo=pytz.utc).astimezone(local_tz)
+    return ntlocal, mntlocal
 
 def create_schedule(file):
     gain = 80
@@ -59,9 +92,29 @@ def create_schedule(file):
     schedule = {}
     schedule['version'] = 1.0
     schedule['Event'] = 'Scheduler'
+    # generate a unique schedule id using uuid
     schedule['schedule_id'] = str(uuid.uuid1())
     schedule['list'] = []
+    # add a wait_until item to the schedule to wait until nautical twilight
+    nautical_twilight, morning_nautical_twilight = local_twilight()
+    wait_until_item = {}
+    wait_until_item['action'] = 'wait_until'
+    wait_until_item['params'] = {}
+    wait_until_item['params']['local_time'] = nautical_twilight.strftime('%H:%M')
+    wait_until_item['schedule_item_id'] = str(uuid.uuid1())
+    schedule['list'].append(wait_until_item)
+    # add a start_up_sequence item to the schedule
+    start_up_sequence = {}
+    start_up_sequence['action'] = 'start_up_sequence'
+    start_up_sequence['params'] = {}
+    start_up_sequence['params']['auto_focus'] = True
+    start_up_sequence['params']['dark_frames'] = True
+    start_up_sequence['params']['3ppa'] = True
+    start_up_sequence['params']['raise_arm'] = True
+    start_up_sequence['schedule_item_id'] = str(uuid.uuid1())
+    schedule['list'].append(start_up_sequence)
 
+    elapsed_time = 0
     # for each target in the target list, create a schedule item
     for i in range(len(targets)):
         target_name = targets['Name'][i]
@@ -69,6 +122,14 @@ def create_schedule(file):
         totalexp = targets['TotalExp'][i]
         ra = targets['ra'][i]
         dec = targets['dec'][i]
+        pause = targets['Pause'][i]
+        # we set the exposure time for each target 
+        set_exposure_time = {}
+        set_exposure_time['action'] = 'action_set_exposure'
+        set_exposure_time['params'] = {}
+        set_exposure_time['params']['exp'] = exptime * 1000 # convert to ms
+        set_exposure_time['schedule_item_id'] = str(uuid.uuid1())
+        schedule['list'].append(set_exposure_time)
 
         # Initialize a new schedule_item for each target
         schedule_item = {}
@@ -90,11 +151,44 @@ def create_schedule(file):
         schedule_item['params']['retry_wait_s'] = 10
         schedule_item['schedule_item_id'] = str(uuid.uuid1())
         schedule['list'].append(schedule_item)
+        elapsed_time += totalexp
+    # add a wait_for item to the schedule between each target
+        if pause > 0:
+            wait_item = {}
+            wait_item['action'] = 'wait_for'
+            wait_item['params'] = {}
+            wait_item['params']['timer_sec'] = pause
+            wait_item['schedule_item_id'] = str(uuid.uuid1())
+            schedule['list'].append(wait_item)
+            elapsed_time += pause
+    # add the final state of the schedule
+    schedule['state'] = 'stopped'
+    schedule['is_stacking_paused'] = False
+    schedule['is_stacking'] = False
+    schedule['is_skip_requested'] = False
+    schedule['current_item_id'] = ''
+    schedule['item_number'] = 0
 
-    # print the json schedule to the console
-   # print(json.dump(schedule, default=lambda x: int(x) if isinstance(x, (np.integer, np.int64)) else x))
-   # to the sscreen not a file
-    print(json.dumps(schedule, default=lambda x: int(x) if isinstance(x, (np.integer, np.int64)) else x))
+    # determine the local time that the schedule will finish 
+    # add the elapsed time to the nautical twilight time in the local timezone
+    print('The schedule will start at: ', nautical_twilight)
+    finish_time = nautical_twilight + datetime.timedelta(seconds=int(elapsed_time))
+    print('The schedule will finish at: ', finish_time)
+    # determine if the schedule will finish before morning nautical twilight
+    if finish_time > morning_nautical_twilight:
+        print('The schedule will finish after morning nautical twilight')
+    else:
+        print('The schedule will finish before morning nautical twilight')
+        # determine the time from the finish of the schedule and morning nautical twilight
+        time_to_morning_nautical_twilight = morning_nautical_twilight - finish_time
+        # print this in a red color
+        print('The time to morning nautical twilight is: ', time_to_morning_nautical_twilight)
+
+    # write the schedule to a json file
+    with open('schedule.json', 'w') as f:
+        f.write(json.dumps(schedule, indent=4, default=lambda x: int(x) if isinstance(x, (np.integer, np.int64)) else x))
+    # print the schedule to the console
+#    print(json.dumps(schedule, indent=4, default=lambda x: int(x) if isinstance(x, (np.integer, np.int64)) else x))
 
 def read_targets(file):
     # read in the demo targets as a df

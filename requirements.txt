@@ -8,3 +8,5 @@ ephem
 pyephem
 scikit-learn
 uuid
+astroplan
+pytz

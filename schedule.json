@@ -1,1 +1,166 @@
-{"version": 1.0, "Event": "Scheduler", "schedule_id": "433c94f2-0a02-11f0-b16a-d9362296ca64", "list": [{"action": "start_mosaic", "params": {"target_name": "M42", "is_j2000": true, "ra": 177.30149999999972, "dec": -5.3876, "is_use_lp_filter": false, "panel_time_sec": 1200, "ra_num": 1, "dec_num": 1, "panel_overlap_percent": 100, "selected_panels": "", "gain": 80, "is_use_autofocus": false, "num_tries": 3, "retry_wait_s": 10}, "schedule_item_id": "433c94f3-0a02-11f0-b16a-d9362296ca64"}, {"action": "start_mosaic", "params": {"target_name": "NGC2997", "is_j2000": true, "ra": 36.172138984199755, "dec": -31.190929391719997, "is_use_lp_filter": false, "panel_time_sec": 3600, "ra_num": 1, "dec_num": 1, "panel_overlap_percent": 100, "selected_panels": "", "gain": 80, "is_use_autofocus": false, "num_tries": 3, "retry_wait_s": 10}, "schedule_item_id": "433c94f4-0a02-11f0-b16a-d9362296ca64"}, {"action": "start_mosaic", "params": {"target_name": "eta Car", "is_j2000": true, "ra": 258.9716129999992, "dec": -59.684430899999995, "is_use_lp_filter": false, "panel_time_sec": 3600, "ra_num": 1, "dec_num": 1, "panel_overlap_percent": 100, "selected_panels": "", "gain": 80, "is_use_autofocus": false, "num_tries": 3, "retry_wait_s": 10}, "schedule_item_id": "433c94f5-0a02-11f0-b16a-d9362296ca64"}, {"action": "start_mosaic", "params": {"target_name": "NGC4945", "is_j2000": true, "ra": 65.45493749999962, "dec": -49.4679, "is_use_lp_filter": false, "panel_time_sec": 3600, "ra_num": 1, "dec_num": 1, "panel_overlap_percent": 100, "selected_panels": "", "gain": 80, "is_use_autofocus": false, "num_tries": 3, "retry_wait_s": 10}, "schedule_item_id": "433c94f6-0a02-11f0-b16a-d9362296ca64"}]}
+{
+    "version": 1.0,
+    "Event": "Scheduler",
+    "schedule_id": "1b93e7a4-0ad3-11f0-90ad-c4346b7799b7",
+    "list": [
+        {
+            "action": "wait_until",
+            "params": {
+                "local_time": "20:00"
+            },
+            "schedule_item_id": "1b9fa522-0ad3-11f0-bf6e-c4346b7799b7"
+        },
+        {
+            "action": "start_up_sequence",
+            "params": {
+                "auto_focus": true,
+                "dark_frames": true,
+                "3ppa": true,
+                "raise_arm": true
+            },
+            "schedule_item_id": "1b9fa523-0ad3-11f0-9007-c4346b7799b7"
+        },
+        {
+            "action": "action_set_exposure",
+            "params": {
+                "exp": 20000
+            },
+            "schedule_item_id": "1b9fcc36-0ad3-11f0-b784-c4346b7799b7"
+        },
+        {
+            "action": "start_mosaic",
+            "params": {
+                "target_name": "M42",
+                "is_j2000": true,
+                "ra": 177.30149999999972,
+                "dec": -5.3876,
+                "is_use_lp_filter": false,
+                "panel_time_sec": 1200,
+                "ra_num": 1,
+                "dec_num": 1,
+                "panel_overlap_percent": 100,
+                "selected_panels": "",
+                "gain": 80,
+                "is_use_autofocus": false,
+                "num_tries": 3,
+                "retry_wait_s": 10
+            },
+            "schedule_item_id": "1b9fcc37-0ad3-11f0-86fc-c4346b7799b7"
+        },
+        {
+            "action": "wait_for",
+            "params": {
+                "timer_sec": 30
+            },
+            "schedule_item_id": "1b9fcc38-0ad3-11f0-8671-c4346b7799b7"
+        },
+        {
+            "action": "action_set_exposure",
+            "params": {
+                "exp": 20000
+            },
+            "schedule_item_id": "1b9fcc39-0ad3-11f0-afb8-c4346b7799b7"
+        },
+        {
+            "action": "start_mosaic",
+            "params": {
+                "target_name": "NGC2997",
+                "is_j2000": true,
+                "ra": 36.172138984199755,
+                "dec": -31.190929391719997,
+                "is_use_lp_filter": false,
+                "panel_time_sec": 3600,
+                "ra_num": 1,
+                "dec_num": 1,
+                "panel_overlap_percent": 100,
+                "selected_panels": "",
+                "gain": 80,
+                "is_use_autofocus": false,
+                "num_tries": 3,
+                "retry_wait_s": 10
+            },
+            "schedule_item_id": "1b9fcc3a-0ad3-11f0-93cd-c4346b7799b7"
+        },
+        {
+            "action": "wait_for",
+            "params": {
+                "timer_sec": 30
+            },
+            "schedule_item_id": "1b9fcc3b-0ad3-11f0-8405-c4346b7799b7"
+        },
+        {
+            "action": "action_set_exposure",
+            "params": {
+                "exp": 20000
+            },
+            "schedule_item_id": "1b9fcc3c-0ad3-11f0-a1b4-c4346b7799b7"
+        },
+        {
+            "action": "start_mosaic",
+            "params": {
+                "target_name": "eta Car",
+                "is_j2000": true,
+                "ra": 258.9716129999992,
+                "dec": -59.684430899999995,
+                "is_use_lp_filter": false,
+                "panel_time_sec": 3600,
+                "ra_num": 1,
+                "dec_num": 1,
+                "panel_overlap_percent": 100,
+                "selected_panels": "",
+                "gain": 80,
+                "is_use_autofocus": false,
+                "num_tries": 3,
+                "retry_wait_s": 10
+            },
+            "schedule_item_id": "1b9fcc3d-0ad3-11f0-ad31-c4346b7799b7"
+        },
+        {
+            "action": "wait_for",
+            "params": {
+                "timer_sec": 30
+            },
+            "schedule_item_id": "1b9fcc3e-0ad3-11f0-99cd-c4346b7799b7"
+        },
+        {
+            "action": "action_set_exposure",
+            "params": {
+                "exp": 30000
+            },
+            "schedule_item_id": "1b9fcc3f-0ad3-11f0-8938-c4346b7799b7"
+        },
+        {
+            "action": "start_mosaic",
+            "params": {
+                "target_name": "NGC4945",
+                "is_j2000": true,
+                "ra": 65.45493749999962,
+                "dec": -49.4679,
+                "is_use_lp_filter": false,
+                "panel_time_sec": 3600,
+                "ra_num": 1,
+                "dec_num": 1,
+                "panel_overlap_percent": 100,
+                "selected_panels": "",
+                "gain": 80,
+                "is_use_autofocus": false,
+                "num_tries": 3,
+                "retry_wait_s": 10
+            },
+            "schedule_item_id": "1b9fcc40-0ad3-11f0-b614-c4346b7799b7"
+        },
+        {
+            "action": "wait_for",
+            "params": {
+                "timer_sec": 30
+            },
+            "schedule_item_id": "1b9fcc41-0ad3-11f0-92aa-c4346b7799b7"
+        }
+    ],
+    "state": "stopped",
+    "is_stacking_paused": false,
+    "is_stacking": false,
+    "is_skip_requested": false,
+    "current_item_id": "",
+    "item_number": 0
+}
