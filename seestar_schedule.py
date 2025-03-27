@@ -120,8 +120,29 @@ def create_schedule(file):
         target_name = targets['Name'][i]
         exptime = targets['ExpTime'][i]    
         totalexp = targets['TotalExp'][i]
-        ra = targets['ra'][i]
+        # convert the ra and dec from degress to hours and degrees
+        print (targets['ra'][i])
+        print (targets['dec'][i])
+        ra = targets['ra'][i] / 15
         dec = targets['dec'][i]
+        # fomrat the ra and dec as strings
+        rah = str(int(ra))
+        ramin = str(int((ra - int(ra)) * 60))
+        rasec = str(int((ra - int(ra) - int((ra - int(ra))) * 60) * 60))
+        decd = str(int(dec))
+        decmin = str(abs(int((dec - int(dec)) * 60)))
+        decsec = str(abs(int((dec - int(dec) - int((dec - int(dec))) * 60) * 60)))
+        # pad the minutes and seconds with zeros
+        if len(ramin) == 1:
+            ramin = '0' + ramin
+        if len(rasec) == 1:
+            rasec = '0' + rasec
+        if len(decmin) == 1:
+            decmin = '0' + decmin
+        if len(decsec) == 1:
+            decsec = '0' + decsec  
+        ra = rah + 'h' + ramin + 'm' + rasec + 's'
+        dec = decd + 'd' + decmin + 'm' + decsec + 's'
         pause = targets['Pause'][i]
         # we set the exposure time for each target 
         set_exposure_time = {}
@@ -199,7 +220,8 @@ def read_targets(file):
     for i in range(len(targets)):
         target = targets['Name'][i]
         result_table = Simbad.query_object(target)
-        coords.append(SkyCoord(ra=result_table['ra'][0], dec=result_table['dec'][0], unit=(u.hourangle, u.deg)))
+        coords.append(SkyCoord(ra=result_table['ra'][0], dec=result_table['dec'][0], unit=(u.deg, u.deg)))
+
     targets['ra'] = [coord.ra.deg for coord in coords]
     targets['dec'] = [coord.dec.deg for coord in coords ]
     return targets
