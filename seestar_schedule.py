@@ -63,29 +63,44 @@ import ephem
 import pytz
 
 
-def local_twilight():
+def local_twilight(obs_params):
+    """
+    Calculate the local twilight times
+    :param obs_params: the observatory parameters
+    :return: the local twilight times
+    """
     # get the current date
     now = datetime.datetime.now(tz=pytz.utc)
     # get the current date
     today = now.date()
     #use pyephem to calculate the local twilight times
     obs = ephem.Observer()
-    obs.lat = '-35.4'    # lat of the observatory
-    obs.long = '149.0'    # long of the observatory
+    # set the observatory parameters from the obs_params
+    print (obs_params)
+    obs.lat = obs_params['Latitude']
+    obs.long = obs_params['Longitude']
+    obs.elevation = float(obs_params['Elevation'])
     obs.date = today
     # calculate the next nautical twilight
     # nautical twilight is when the sun is 12 degrees below the horizon
     # determine when the sun is 12 degrees below the horizon
     obs.horizon = '-12'
     nautical_twilight = obs.next_setting(ephem.Sun(), use_center=True).datetime()
-    local_tz = pytz.timezone('Australia/Sydney')
+    local_tz = pytz.timezone(obs_params['Timezone'])
     # calculate the next morning nautical twilight
     morning_nautical_twilight = obs.next_rising(ephem.Sun(), use_center=True).datetime()
     ntlocal = nautical_twilight.replace(tzinfo=pytz.utc).astimezone(local_tz)
     mntlocal = morning_nautical_twilight.replace(tzinfo=pytz.utc).astimezone(local_tz)
     return ntlocal, mntlocal
 
-def create_schedule(file):
+def create_schedule(file, obs_params, config_settings):
+    """
+    Create a schedule from a target list
+    :param file: the target list file
+    :param obs_params: the observatory parameters
+    :param config_settings: the config settings
+    :return: None
+    """
     gain = 80
     targets = read_targets(file)
     # generate the json schedule using the json format above
@@ -95,91 +110,118 @@ def create_schedule(file):
     # generate a unique schedule id using uuid
     schedule['schedule_id'] = str(uuid.uuid1())
     schedule['list'] = []
-    # add a wait_until item to the schedule to wait until nautical twilight
-    nautical_twilight, morning_nautical_twilight = local_twilight()
-    wait_until_item = {}
-    wait_until_item['action'] = 'wait_until'
-    wait_until_item['params'] = {}
-    wait_until_item['params']['local_time'] = nautical_twilight.strftime('%H:%M')
-    wait_until_item['schedule_item_id'] = str(uuid.uuid1())
-    schedule['list'].append(wait_until_item)
-    # add a start_up_sequence item to the schedule
-    start_up_sequence = {}
-    start_up_sequence['action'] = 'start_up_sequence'
-    start_up_sequence['params'] = {}
-    start_up_sequence['params']['auto_focus'] = True
-    start_up_sequence['params']['dark_frames'] = True
-    start_up_sequence['params']['3ppa'] = True
-    start_up_sequence['params']['raise_arm'] = True
-    start_up_sequence['schedule_item_id'] = str(uuid.uuid1())
-    schedule['list'].append(start_up_sequence)
+    nautical_twilight, morning_nautical_twilight = local_twilight(obs_params)
+    if config_settings['Wait_For_Twilight'] == 'True':
+        # add a wait_until item to the schedule to wait until nautical twilight
+        wait_until_item = {}
+        wait_until_item['action'] = 'wait_until'
+        wait_until_item['params'] = {}
+        wait_until_item['params']['local_time'] = nautical_twilight.strftime('%H:%M')
+        wait_until_item['schedule_item_id'] = str(uuid.uuid1())
+        schedule['list'].append(wait_until_item)
+    if config_settings['Start_Up_Sequence'] == 'True':
+        # add a start_up_sequence item to the schedule
+        start_up_sequence = {}
+        start_up_sequence['action'] = 'start_up_sequence'
+        start_up_sequence['params'] = {}
+        start_up_sequence['params']['auto_focus'] = True
+        start_up_sequence['params']['dark_frames'] = True
+        start_up_sequence['params']['3ppa'] = True
+        start_up_sequence['params']['raise_arm'] = True
+        start_up_sequence['schedule_item_id'] = str(uuid.uuid1())
+        schedule['list'].append(start_up_sequence)
 
     elapsed_time = 0
-    # for each target in the target list, create a schedule item
-    for i in range(len(targets)):
-        target_name = targets['Name'][i]
-        exptime = targets['ExpTime'][i]    
-        totalexp = targets['TotalExp'][i]
-        # convert the ra and dec from degress to hours and degrees
-        ra = targets['ra'][i] / 15
-        dec = targets['dec'][i]
-        # fomrat the ra and dec as strings
-        rah = str(int(ra))
-        ramin = str(int((ra - int(ra)) * 60))
-        rasec = str(int((ra - int(ra) - int((ra - int(ra))) * 60) * 60))
-        decd = str(int(dec))
-        decmin = str(abs(int((dec - int(dec)) * 60)))
-        decsec = str(abs(int((dec - int(dec) - int((dec - int(dec))) * 60) * 60)))
-        # pad the minutes and seconds with zeros
-        if len(ramin) == 1:
-            ramin = '0' + ramin
-        if len(rasec) == 1:
-            rasec = '0' + rasec
-        if len(decmin) == 1:
-            decmin = '0' + decmin
-        if len(decsec) == 1:
-            decsec = '0' + decsec  
-        ra = rah + 'h' + ramin + 'm' + rasec + 's'
-        dec = decd + 'd' + decmin + 'm' + decsec + 's'
-        pause = targets['Pause'][i]
-        # we set the exposure time for each target 
-        set_exposure_time = {}
-        set_exposure_time['action'] = 'action_set_exposure'
-        set_exposure_time['params'] = {}
-        set_exposure_time['params']['exp'] = exptime * 1000 # convert to ms
-        set_exposure_time['schedule_item_id'] = str(uuid.uuid1())
-        schedule['list'].append(set_exposure_time)
+    # if the schedule flag Repeat_Target is set to True, then repeat the target list
+    irepeat = True
+    while irepeat:
+        ixgt2 = 0
+        # for each target in the target list, create a schedule item
+        for i in range(len(targets)):
+            target_name = targets['Name'][i]
+            exptime = targets['ExpTime'][i]    
+            totalexp = targets['TotalExp'][i]
+            ra = targets['ra'][i]
+            dec = targets['dec'][i]
+            # check the altitude of the target
+            obs = ephem.Observer()
+            obs.lat = obs_params['Latitude']
+            obs.long = obs_params['Longitude']
+            obs.elevation = float(obs_params['Elevation'])
+            # calulate the time of the observation as the nautical twilight time plus the elapsed time
+            # convert nautical_twilight to UTC
+            date = nautical_twilight.astimezone(pytz.utc) + datetime.timedelta(seconds=int(elapsed_time))
+            #convert to a pyephem date
+            obs.date = date
+            print (obs.date)
+            print (nautical_twilight)
+            print (nautical_twilight.astimezone(pytz.utc))
+            print (elapsed_time)
+            target = ephem.FixedBody()
+            target._ra = ra
+            target._dec = dec
+            target.compute(obs)
+            alt = target.alt
+            az = target.az
+            print(obs.date)
+            print(f'Target {target_name} has altitude {alt} and azimuth {az}')
+            # check if the target has set below 30 degrees altitude and is in the west
+            if float(alt) < 30/180*ephem.pi and az > 180/180*ephem.pi:
+                print(alt)
+                print(f'{target_name} below 30 degrees altitude and is in the west')
+                ixgt2 += 1
+                continue
+            # check if the observation would take us past morning twilight
+            if nautical_twilight + datetime.timedelta(seconds=int(elapsed_time)) + datetime.timedelta(seconds=int(totalexp)) > morning_nautical_twilight:
+                irepeat = False
+                break
+            pause = targets['Pause'][i]
+            # we set the exposure time for each target 
+            set_exposure_time = {}
+            set_exposure_time['action'] = 'action_set_exposure'
+            set_exposure_time['params'] = {}
+            set_exposure_time['params']['exp'] = exptime * 1000 # convert to ms
+            set_exposure_time['schedule_item_id'] = str(uuid.uuid1())
+            schedule['list'].append(set_exposure_time)
 
-        # Initialize a new schedule_item for each target
-        schedule_item = {}
-        schedule_item['action'] = 'start_mosaic'
-        schedule_item['params'] = {}
-        schedule_item['params']['target_name'] = target_name
-        schedule_item['params']['is_j2000'] = True
-        schedule_item['params']['ra'] = ra
-        schedule_item['params']['dec'] = dec
-        schedule_item['params']['is_use_lp_filter'] = False
-        schedule_item['params']['panel_time_sec'] = totalexp
-        schedule_item['params']['ra_num'] = 1
-        schedule_item['params']['dec_num'] = 1
-        schedule_item['params']['panel_overlap_percent'] = 100
-        schedule_item['params']['selected_panels'] = ''
-        schedule_item['params']['gain'] = gain
-        schedule_item['params']['is_use_autofocus'] = False
-        schedule_item['params']['num_tries'] = 3
-        schedule_item['params']['retry_wait_s'] = 10
-        schedule_item['schedule_item_id'] = str(uuid.uuid1())
-        schedule['list'].append(schedule_item)
-        elapsed_time += totalexp
-    # add a wait_for item to the schedule between each target
-        if pause > 0:
-            wait_item = {}
-            wait_item['action'] = 'wait_for'
-            wait_item['params'] = {}
-            wait_item['params']['timer_sec'] = pause
-            wait_item['schedule_item_id'] = str(uuid.uuid1())
-            schedule['list'].append(wait_item)
-            elapsed_time += pause
+            # Initialize a new schedule_item for each target
+            schedule_item = {}
+            schedule_item['action'] = 'start_mosaic'
+            schedule_item['params'] = {}
+            schedule_item['params']['target_name'] = target_name
+            schedule_item['params']['is_j2000'] = True
+            schedule_item['params']['ra'] = ra
+            schedule_item['params']['dec'] = dec
+            schedule_item['params']['is_use_lp_filter'] = False
+            schedule_item['params']['panel_time_sec'] = totalexp
+            schedule_item['params']['ra_num'] = 1
+            schedule_item['params']['dec_num'] = 1
+            schedule_item['params']['panel_overlap_percent'] = 100
+            schedule_item['params']['selected_panels'] = ''
+            schedule_item['params']['gain'] = gain
+            schedule_item['params']['is_use_autofocus'] = False
+            schedule_item['params']['num_tries'] = 3
+            schedule_item['params']['retry_wait_s'] = 10
+            schedule_item['schedule_item_id'] = str(uuid.uuid1())
+            schedule['list'].append(schedule_item)
+            elapsed_time += totalexp
+        # add a wait_for item to the schedule between each target
+            if pause > 0:
+                wait_item = {}
+                wait_item['action'] = 'wait_for'
+                wait_item['params'] = {}
+                wait_item['params']['timer_sec'] = pause
+                wait_item['schedule_item_id'] = str(uuid.uuid1())
+                schedule['list'].append(wait_item)
+                elapsed_time += pause
+        # if the Repeat_Targets flag is set to False, then we are done
+        if config_settings['Repeat_Targets'] == 'False':
+            irepeat = False
+        # if all the targets are above 2 airmasses, then we are done
+        if ixgt2 == len(targets):
+            print('All targets are above 2 airmasses - exiting')
+            irepeat = False
+
     # add the final state of the schedule
     schedule['state'] = 'stopped'
     schedule['is_stacking_paused'] = False
@@ -210,18 +252,47 @@ def create_schedule(file):
 #    print(json.dumps(schedule, indent=4, default=lambda x: int(x) if isinstance(x, (np.integer, np.int64)) else x))
 
 def read_targets(file):
-    # read in the demo targets as a df
-    targets = pd.read_csv(file)
+    # read in the targets from the target file
+    # first we read the target file in until we find the start of the target list
+    with open(file, 'r') as f:
+        lines = f.readlines()
+    # find the start of the target list
+    # the target list starts with the line 'Name,ExpTime,TotalExp,Pause'
+    for i in range(len(lines)):
+        if lines[i].startswith('Name'):
+            target_start = i
+            break
+    # create a dataframe from the target list
+    # set the column names to the first row of the target list
+    targets = pd.read_csv(file, skiprows=target_start)
+    targets.columns = lines[target_start].replace(' ','').strip().split(',')
+    print(targets)
+    # read in the target list
     # resolve their coordinates using astroquery call to Simbad 
     # and add them to the df
     coords = []
     for i in range(len(targets)):
         target = targets['Name'][i]
         result_table = Simbad.query_object(target)
-        coords.append(SkyCoord(ra=result_table['ra'][0], dec=result_table['dec'][0], unit=(u.deg, u.deg)))
-
-    targets['ra'] = [coord.ra.deg for coord in coords]
-    targets['dec'] = [coord.dec.deg for coord in coords ]
+        print(result_table)
+        if result_table is not None:
+            ra = result_table['ra'][0]/15
+            dec = result_table['dec'][0]
+            # convert the float ra to a string with the format hh:mm:ss
+            rah = int(ra)
+            ramin = int((ra - rah) * 60)
+            rasec = (ra - rah - ramin/60) * 3600
+            ra = f'{rah}:{ramin}:{rasec:.1f}'
+            # convert the float dec to a string with the format dd:mm:ss
+            decd = int(dec)
+            decmin = int((dec - decd) * 60)
+            decsec = (dec - decd - decmin/60) * 3600
+            dec = f'{decd}:{abs(decmin)}:{abs(decsec):.1f}'
+            coords.append((ra, dec))
+    # add the coordinates to the dataframe
+    coords = pd.DataFrame(coords, columns=['ra', 'dec'])
+    targets = pd.concat([targets, coords], axis=1)
+    print(targets)
     return targets
 
 
@@ -234,4 +305,33 @@ if __name__ == '__main__':
     if target_file not in os.listdir():
         print('The target file does not exist')
         sys.exit()
-    create_schedule(target_file)
+    # read in the observatory parameters from the target_file
+    with open(target_file, 'r') as f:
+        lines = f.readlines()
+    for i in range(len(lines)):
+        if lines[i].startswith('Observatory'):
+            obs_line = i
+            break
+    # read the lines forward from the Observatory line to get the observatory parameters
+    obs_params = {}
+    for i in range(obs_line + 1, len(lines)):
+        if lines[i].startswith('Config') or lines[i].strip() == '':
+            break
+        key, value = lines[i].split(':', 1)
+        value = value.strip()
+        obs_params[key.strip()] = value.strip()  # Strip whitespace and newline characters
+        # read in the config settings form the target file
+    for i in range(len(lines)):
+        if lines[i].startswith('Config'):
+            config_line = i
+            break
+    # read the lines forward from the Config line to get the config settings
+    config_settings = {}
+    for i in range(config_line + 1, len(lines)):
+        if lines[i].startswith('Targets') or lines[i].strip() == '':
+            break
+        key, value = lines[i].split(':')
+        config_settings[key] = value
+
+    create_schedule(target_file, obs_params, config_settings)
+    print('Schedule created')

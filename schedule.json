@@ -1,39 +1,22 @@
 {
     "version": 1.0,
     "Event": "Scheduler",
-    "schedule_id": "56f35553-0ad6-11f0-b198-c4346b7799b7",
+    "schedule_id": "9543356e-0b72-11f0-b16a-d9362296ca64",
     "list": [
-        {
-            "action": "wait_until",
-            "params": {
-                "local_time": "20:00"
-            },
-            "schedule_item_id": "56ff8806-0ad6-11f0-8063-c4346b7799b7"
-        },
-        {
-            "action": "start_up_sequence",
-            "params": {
-                "auto_focus": true,
-                "dark_frames": true,
-                "3ppa": true,
-                "raise_arm": true
-            },
-            "schedule_item_id": "56ff8807-0ad6-11f0-b6fb-c4346b7799b7"
-        },
         {
             "action": "action_set_exposure",
             "params": {
                 "exp": 20000
             },
-            "schedule_item_id": "56ffaf21-0ad6-11f0-9320-c4346b7799b7"
+            "schedule_item_id": "9543356f-0b72-11f0-b16a-d9362296ca64"
         },
         {
             "action": "start_mosaic",
             "params": {
                 "target_name": "M42",
                 "is_j2000": true,
-                "ra": "5h35m35s",
-                "dec": "-5d23m23s",
+                "ra": "5:35:16.8",
+                "dec": "-5:23:15.4",
                 "is_use_lp_filter": false,
                 "panel_time_sec": 1200,
                 "ra_num": 1,
@@ -45,29 +28,29 @@
                 "num_tries": 3,
                 "retry_wait_s": 10
             },
-            "schedule_item_id": "56ffaf22-0ad6-11f0-83f6-c4346b7799b7"
+            "schedule_item_id": "95433570-0b72-11f0-b16a-d9362296ca64"
         },
         {
             "action": "wait_for",
             "params": {
                 "timer_sec": 30
             },
-            "schedule_item_id": "56ffaf23-0ad6-11f0-abdd-c4346b7799b7"
+            "schedule_item_id": "95433571-0b72-11f0-b16a-d9362296ca64"
         },
         {
             "action": "action_set_exposure",
             "params": {
                 "exp": 20000
             },
-            "schedule_item_id": "56ffaf24-0ad6-11f0-b0fa-c4346b7799b7"
+            "schedule_item_id": "95433572-0b72-11f0-b16a-d9362296ca64"
         },
         {
             "action": "start_mosaic",
             "params": {
-                "target_name": "NGC2997",
+                "target_name": "M8",
                 "is_j2000": true,
-                "ra": "9h45m45s",
-                "dec": "-31d11m11s",
+                "ra": "18:3:37.0",
+                "dec": "-24:23:12.0",
                 "is_use_lp_filter": false,
                 "panel_time_sec": 3600,
                 "ra_num": 1,
@@ -79,29 +62,29 @@
                 "num_tries": 3,
                 "retry_wait_s": 10
             },
-            "schedule_item_id": "56ffaf25-0ad6-11f0-9dae-c4346b7799b7"
+            "schedule_item_id": "95433573-0b72-11f0-b16a-d9362296ca64"
         },
         {
             "action": "wait_for",
             "params": {
                 "timer_sec": 30
             },
-            "schedule_item_id": "56ffaf26-0ad6-11f0-9621-c4346b7799b7"
+            "schedule_item_id": "95433574-0b72-11f0-b16a-d9362296ca64"
         },
         {
             "action": "action_set_exposure",
             "params": {
                 "exp": 20000
             },
-            "schedule_item_id": "56ffd62a-0ad6-11f0-8990-c4346b7799b7"
+            "schedule_item_id": "95433575-0b72-11f0-b16a-d9362296ca64"
         },
         {
             "action": "start_mosaic",
             "params": {
                 "target_name": "eta Car",
                 "is_j2000": true,
-                "ra": "10h45m45s",
-                "dec": "-59d41m41s",
+                "ra": "10:45:3.5",
+                "dec": "-59:41:4.0",
                 "is_use_lp_filter": false,
                 "panel_time_sec": 3600,
                 "ra_num": 1,
@@ -113,29 +96,29 @@
                 "num_tries": 3,
                 "retry_wait_s": 10
             },
-            "schedule_item_id": "56ffd62b-0ad6-11f0-b333-c4346b7799b7"
+            "schedule_item_id": "95433576-0b72-11f0-b16a-d9362296ca64"
         },
         {
             "action": "wait_for",
             "params": {
                 "timer_sec": 30
             },
-            "schedule_item_id": "56ffd62c-0ad6-11f0-9534-c4346b7799b7"
+            "schedule_item_id": "95433577-0b72-11f0-b16a-d9362296ca64"
         },
         {
             "action": "action_set_exposure",
             "params": {
                 "exp": 30000
             },
-            "schedule_item_id": "56ffd62d-0ad6-11f0-9359-c4346b7799b7"
+            "schedule_item_id": "95433578-0b72-11f0-b16a-d9362296ca64"
         },
         {
             "action": "start_mosaic",
             "params": {
-                "target_name": "NGC4945",
+                "target_name": "NGC5128",
                 "is_j2000": true,
-                "ra": "13h05m05s",
-                "dec": "-49d28m28s",
+                "ra": "13:25:27.6",
+                "dec": "-43:1:8.8",
                 "is_use_lp_filter": false,
                 "panel_time_sec": 3600,
                 "ra_num": 1,
@@ -147,14 +130,218 @@
                 "num_tries": 3,
                 "retry_wait_s": 10
             },
-            "schedule_item_id": "56ffd62e-0ad6-11f0-98ec-c4346b7799b7"
+            "schedule_item_id": "95433579-0b72-11f0-b16a-d9362296ca64"
         },
         {
             "action": "wait_for",
             "params": {
                 "timer_sec": 30
             },
-            "schedule_item_id": "56ffd62f-0ad6-11f0-ad48-c4346b7799b7"
+            "schedule_item_id": "9543357a-0b72-11f0-b16a-d9362296ca64"
+        },
+        {
+            "action": "action_set_exposure",
+            "params": {
+                "exp": 20000
+            },
+            "schedule_item_id": "9543357b-0b72-11f0-b16a-d9362296ca64"
+        },
+        {
+            "action": "start_mosaic",
+            "params": {
+                "target_name": "M8",
+                "is_j2000": true,
+                "ra": "18:3:37.0",
+                "dec": "-24:23:12.0",
+                "is_use_lp_filter": false,
+                "panel_time_sec": 3600,
+                "ra_num": 1,
+                "dec_num": 1,
+                "panel_overlap_percent": 100,
+                "selected_panels": "",
+                "gain": 80,
+                "is_use_autofocus": false,
+                "num_tries": 3,
+                "retry_wait_s": 10
+            },
+            "schedule_item_id": "9543357c-0b72-11f0-b16a-d9362296ca64"
+        },
+        {
+            "action": "wait_for",
+            "params": {
+                "timer_sec": 30
+            },
+            "schedule_item_id": "9543357d-0b72-11f0-b16a-d9362296ca64"
+        },
+        {
+            "action": "action_set_exposure",
+            "params": {
+                "exp": 20000
+            },
+            "schedule_item_id": "9543357e-0b72-11f0-b16a-d9362296ca64"
+        },
+        {
+            "action": "start_mosaic",
+            "params": {
+                "target_name": "eta Car",
+                "is_j2000": true,
+                "ra": "10:45:3.5",
+                "dec": "-59:41:4.0",
+                "is_use_lp_filter": false,
+                "panel_time_sec": 3600,
+                "ra_num": 1,
+                "dec_num": 1,
+                "panel_overlap_percent": 100,
+                "selected_panels": "",
+                "gain": 80,
+                "is_use_autofocus": false,
+                "num_tries": 3,
+                "retry_wait_s": 10
+            },
+            "schedule_item_id": "9543357f-0b72-11f0-b16a-d9362296ca64"
+        },
+        {
+            "action": "wait_for",
+            "params": {
+                "timer_sec": 30
+            },
+            "schedule_item_id": "95433580-0b72-11f0-b16a-d9362296ca64"
+        },
+        {
+            "action": "action_set_exposure",
+            "params": {
+                "exp": 30000
+            },
+            "schedule_item_id": "95433581-0b72-11f0-b16a-d9362296ca64"
+        },
+        {
+            "action": "start_mosaic",
+            "params": {
+                "target_name": "NGC5128",
+                "is_j2000": true,
+                "ra": "13:25:27.6",
+                "dec": "-43:1:8.8",
+                "is_use_lp_filter": false,
+                "panel_time_sec": 3600,
+                "ra_num": 1,
+                "dec_num": 1,
+                "panel_overlap_percent": 100,
+                "selected_panels": "",
+                "gain": 80,
+                "is_use_autofocus": false,
+                "num_tries": 3,
+                "retry_wait_s": 10
+            },
+            "schedule_item_id": "95433582-0b72-11f0-b16a-d9362296ca64"
+        },
+        {
+            "action": "wait_for",
+            "params": {
+                "timer_sec": 30
+            },
+            "schedule_item_id": "95433583-0b72-11f0-b16a-d9362296ca64"
+        },
+        {
+            "action": "action_set_exposure",
+            "params": {
+                "exp": 20000
+            },
+            "schedule_item_id": "95433584-0b72-11f0-b16a-d9362296ca64"
+        },
+        {
+            "action": "start_mosaic",
+            "params": {
+                "target_name": "M8",
+                "is_j2000": true,
+                "ra": "18:3:37.0",
+                "dec": "-24:23:12.0",
+                "is_use_lp_filter": false,
+                "panel_time_sec": 3600,
+                "ra_num": 1,
+                "dec_num": 1,
+                "panel_overlap_percent": 100,
+                "selected_panels": "",
+                "gain": 80,
+                "is_use_autofocus": false,
+                "num_tries": 3,
+                "retry_wait_s": 10
+            },
+            "schedule_item_id": "95433585-0b72-11f0-b16a-d9362296ca64"
+        },
+        {
+            "action": "wait_for",
+            "params": {
+                "timer_sec": 30
+            },
+            "schedule_item_id": "95433586-0b72-11f0-b16a-d9362296ca64"
+        },
+        {
+            "action": "action_set_exposure",
+            "params": {
+                "exp": 20000
+            },
+            "schedule_item_id": "95433587-0b72-11f0-b16a-d9362296ca64"
+        },
+        {
+            "action": "start_mosaic",
+            "params": {
+                "target_name": "eta Car",
+                "is_j2000": true,
+                "ra": "10:45:3.5",
+                "dec": "-59:41:4.0",
+                "is_use_lp_filter": false,
+                "panel_time_sec": 3600,
+                "ra_num": 1,
+                "dec_num": 1,
+                "panel_overlap_percent": 100,
+                "selected_panels": "",
+                "gain": 80,
+                "is_use_autofocus": false,
+                "num_tries": 3,
+                "retry_wait_s": 10
+            },
+            "schedule_item_id": "95433588-0b72-11f0-b16a-d9362296ca64"
+        },
+        {
+            "action": "wait_for",
+            "params": {
+                "timer_sec": 30
+            },
+            "schedule_item_id": "95433589-0b72-11f0-b16a-d9362296ca64"
+        },
+        {
+            "action": "action_set_exposure",
+            "params": {
+                "exp": 30000
+            },
+            "schedule_item_id": "9543358a-0b72-11f0-b16a-d9362296ca64"
+        },
+        {
+            "action": "start_mosaic",
+            "params": {
+                "target_name": "NGC5128",
+                "is_j2000": true,
+                "ra": "13:25:27.6",
+                "dec": "-43:1:8.8",
+                "is_use_lp_filter": false,
+                "panel_time_sec": 3600,
+                "ra_num": 1,
+                "dec_num": 1,
+                "panel_overlap_percent": 100,
+                "selected_panels": "",
+                "gain": 80,
+                "is_use_autofocus": false,
+                "num_tries": 3,
+                "retry_wait_s": 10
+            },
+            "schedule_item_id": "9543358b-0b72-11f0-b16a-d9362296ca64"
+        },
+        {
+            "action": "wait_for",
+            "params": {
+                "timer_sec": 30
+            },
+            "schedule_item_id": "9543358c-0b72-11f0-b16a-d9362296ca64"
         }
     ],
     "state": "stopped",
