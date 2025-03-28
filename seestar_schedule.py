@@ -1,54 +1,3 @@
-# seestar needs the following json to form the schedule:
-# 
-# {
-#     "version": 1.0,
-#     "Event": "Scheduler",
-#     "schedule_id": "faecb0b0-1f1b-11e9-8b4f-0a580a8100e0",
-#     "list": [
-#         {
-#             "action": "start_mosaic",
-#             "params": {
-#                 "target_name": "M51",
-#                 "is_j2000": true,
-#                 "ra": "13h28m53.0s",
-#                 "dec": "47d11m42.0s",
-#                 "is_use_lp_filter": false,
-#                 "panel_time_sec": 300,
-#                 "ra_num": 1,
-#                 "dec_num": 1,
-#                 "panel_overlap_percent": 100,
-#                 "selected_panels": "",
-#                 "gain": 80,
-#                 "is_use_autofocus": false,
-#                 "num_tries": 3,
-#                 "retry_wait_s": 10
-#             },
-#             "schedule_item_id": "faecb0b0-1f1b-11e9-8b4f-0a580a8100e0"
-#         },
-#         {
-#             "action": "wait_for",
-#             "params": {
-#                 "time_sec": 300
-#             },
-#             "schedule_item_id": "faecb0b0-1f1b-11e9-8b4f-0a580a8100e0"
-#         }
-#     ],
-#     "state": "stopped",
-#     "is_stacking_paused": false,
-#     "is_stacking": false,
-#     "is_skip_requested": false,
-#     "current_item_id": "",
-#     "item_number": 0
-# }
-# the startup sequence is a list item as follows:
-# {
-#     "action": "wait_until",
-#     "params": {
-#         "local_time": "20:00"
-#     },
-#     "schedule_item_id": "faecb0b0-1f1b-11e9-8b4f-0a580a8100e0"
-# }
-
 import json
 import datetime
 import pandas as pd
@@ -61,6 +10,7 @@ from astropy.coordinates import SkyCoord
 from astroquery.simbad import Simbad
 import ephem
 import pytz
+from colorama import Fore, Back, Style
 
 
 def local_twilight(obs_params):
@@ -76,7 +26,7 @@ def local_twilight(obs_params):
     #use pyephem to calculate the local twilight times
     obs = ephem.Observer()
     # set the observatory parameters from the obs_params
-    print (obs_params)
+    #print (obs_params)
     obs.lat = obs_params['Latitude']
     obs.long = obs_params['Longitude']
     obs.elevation = float(obs_params['Elevation'])
@@ -153,22 +103,17 @@ def create_schedule(file, obs_params, config_settings):
             date = nautical_twilight.astimezone(pytz.utc) + datetime.timedelta(seconds=int(elapsed_time))
             #convert to a pyephem date
             obs.date = date
-            print (obs.date)
-            print (nautical_twilight)
-            print (nautical_twilight.astimezone(pytz.utc))
-            print (elapsed_time)
             target = ephem.FixedBody()
             target._ra = ra
             target._dec = dec
             target.compute(obs)
             alt = target.alt
             az = target.az
-            print(obs.date)
-            print(f'Target {target_name} has altitude {alt} and azimuth {az}')
+            # use module to print to the terminal in color
+            print(Fore.BLUE + f'Target {target_name} has altitude {alt} and azimuth {az}' + Style.RESET_ALL)
             # check if the target has set below 30 degrees altitude and is in the west
             if float(alt) < 30/180*ephem.pi and az > 180/180*ephem.pi:
-                print(alt)
-                print(f'{target_name} below 30 degrees altitude and is in the west')
+                print(Fore.RED + f'{target_name} below 30 degrees altitude and is in the west' + Style.RESET_ALL)
                 ixgt2 += 1
                 continue
             # check if the observation would take us past morning twilight
@@ -219,7 +164,7 @@ def create_schedule(file, obs_params, config_settings):
             irepeat = False
         # if all the targets are above 2 airmasses, then we are done
         if ixgt2 == len(targets):
-            print('All targets are above 2 airmasses - exiting')
+            print(Fore.RED + 'All targets are above 2 airmasses - exiting' + Style.RESET_ALL)
             irepeat = False
 
     # add the final state of the schedule
@@ -266,7 +211,6 @@ def read_targets(file):
     # set the column names to the first row of the target list
     targets = pd.read_csv(file, skiprows=target_start)
     targets.columns = lines[target_start].replace(' ','').strip().split(',')
-    print(targets)
     # read in the target list
     # resolve their coordinates using astroquery call to Simbad 
     # and add them to the df
@@ -274,7 +218,6 @@ def read_targets(file):
     for i in range(len(targets)):
         target = targets['Name'][i]
         result_table = Simbad.query_object(target)
-        print(result_table)
         if result_table is not None:
             ra = result_table['ra'][0]/15
             dec = result_table['dec'][0]
@@ -282,17 +225,18 @@ def read_targets(file):
             rah = int(ra)
             ramin = int((ra - rah) * 60)
             rasec = (ra - rah - ramin/60) * 3600
-            ra = f'{rah}:{ramin}:{rasec:.1f}'
+            ra = f'{rah:02}:{ramin:02}:{rasec:04.1f}'
             # convert the float dec to a string with the format dd:mm:ss
             decd = int(dec)
             decmin = int((dec - decd) * 60)
             decsec = (dec - decd - decmin/60) * 3600
-            dec = f'{decd}:{abs(decmin)}:{abs(decsec):.1f}'
+            # construct the dec string with padding of 0s to 2 digits
+            dec = f'{decd:+03}:{abs(decmin):02}:{abs(decsec):04.1f}'
             coords.append((ra, dec))
     # add the coordinates to the dataframe
     coords = pd.DataFrame(coords, columns=['ra', 'dec'])
     targets = pd.concat([targets, coords], axis=1)
-    print(targets)
+    #print(targets)
     return targets
 
 
@@ -334,4 +278,5 @@ if __name__ == '__main__':
         config_settings[key] = value
 
     create_schedule(target_file, obs_params, config_settings)
-    print('Schedule created')
+    print(Fore.GREEN + 'Schedule created' + Style.RESET_ALL)
+    print('The schedule has been written to schedule.json')
