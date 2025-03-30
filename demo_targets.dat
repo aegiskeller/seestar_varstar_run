@@ -1,7 +1,17 @@
-Name,ExpTime,TotalExp,Pause
-M42, 20, 1200, 30
-NGC2997,20,3600,30
-eta Car,20,3600,30
-NGC4945,30,3600,30
-SA98, 8, 60, 0
-SA101, 8, 60, 0
+Observatory
+Latitude:       -35:36:00
+Longitude:      149:01:45
+Elevation:      600
+Timezone:       Australia/Sydney
+
+Config
+Wait_For_Twilight:    False
+Start_Up_Sequence:    False
+Repeat_Targets:       True
+
+Targets
+Name, ExpTime, TotalExp, Pause
+M42,       20,     1200,    30
+M8,   20,     3600,    30
+eta Car,   20,     3600,    30
+NGC5128,   30,     3600,    30
