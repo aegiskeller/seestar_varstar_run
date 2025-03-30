@@ -11,3 +11,7 @@ uuid
 astroplan
 pytz
 colorama
+black
+pylint
+pytest
+pytest-cov

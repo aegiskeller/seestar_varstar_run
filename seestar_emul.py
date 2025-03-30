@@ -4,7 +4,9 @@ The method takes the same arguments as the seestar_run_runner method and prints 
 to the console. The method returns 0 if the arguments are valid and 1 if the arguments are invalid.
 The class can be used to test the seestar_run_runner method without running the SEESTAR_run module.
 """
+
 import random
+
 
 def seestar_run_runner(targetName, coords, exptime, totaltime):
     """Emulate the seestar_run_runner method of the SEESTAR_run module.
@@ -17,27 +19,27 @@ def seestar_run_runner(targetName, coords, exptime, totaltime):
     """
     # Check if the targetName is a string
     if not isinstance(targetName, str):
-        print('targetName is not a string')
+        print("targetName is not a string")
         return 1
     # Check if the coords is a list
     if not isinstance(coords, list):
-        print('coords is not a list')
+        print("coords is not a list")
         return 1
     # Check if the coords list has two elements
     if len(coords) != 2:
-        print('coords does not have two elements')
+        print("coords does not have two elements")
         return 1
     # Check if the first element of the coords list is a number
     if not isinstance(coords[0], (int, float)):
-        print('first element of coords is not a number')
+        print("first element of coords is not a number")
         return 1
     # Check if the second element of the coords list is a number
     if not isinstance(coords[1], (int, float)):
-        print('second element of coords is not a number')
+        print("second element of coords is not a number")
         return 1
     # Check if the exptime is a number
     if not isinstance(exptime, (int, float)):
-        print('exptime is not a number')
+        print("exptime is not a number")
         return 1
     # Print the arguments to the console
     print(targetName, coords, exptime, totaltime)
@@ -45,13 +47,15 @@ def seestar_run_runner(targetName, coords, exptime, totaltime):
     # to simulate an instrument error - this ins generated at random a certain fraction of the time e_frac
     e_frac = 0.1
     if random.random() < e_frac:
-        raise Exception('Instrument error')
+        raise Exception("Instrument error")
     return 0
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # Test the seestar_run_runner method
     # read arguments from the command line
     import sys
+
     targetName = sys.argv[1]
     coords = [float(sys.argv[2]), float(sys.argv[3])]
     exptime = float(sys.argv[4])

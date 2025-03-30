@@ -176,3 +176,5 @@ cython_debug/
 # user-specific stuff
 demo*
 schedule*
+.vscode/
+.env/
